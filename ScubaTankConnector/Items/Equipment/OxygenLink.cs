@@ -14,7 +14,7 @@ namespace OxygenLink
     {
         public static PrefabInfo Info { get; } = PrefabInfo
             .WithTechType("OxygenLink", "Oxygen Link", "Links all connected tanks in the inventory.")
-            .WithIcon(ImageUtils.LoadSpriteFromFile(System.IO.Path.Combine(Plugin.ASSETS_FOLDER_LOCATION, "OxygenLink.png")))
+            .WithIcon(ImageUtils.LoadSpriteFromFile(System.IO.Path.Combine(Plugin.AssetFolder, "OxygenLink.png")))
             .WithSizeInInventory(new Vector2int() { x = 1, y = 1 });
 
         public static void Register()
