@@ -12,8 +12,8 @@ namespace OxygenLink
         public const string
             GUID = $"{AUTHOR}.{NAME}",
             NAME = "OxygenLink",
-            VERSION = "1.0.2",
-            AUTHOR = "0xKate",
+            VERSION = "1.0.5",
+            AUTHOR = "KateMods",
             NEXUS = "Placeholder";
 
         public new static ManualLogSource Logger { get; private set; }

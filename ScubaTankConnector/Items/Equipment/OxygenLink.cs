@@ -94,7 +94,7 @@ namespace OxygenLink
         {
             Inventory.main.container.onAddItem -= OnItemAdded;
             Inventory.main.container.onRemoveItem -= OnItemRemoved;
-            LinkedSources.ForEach(source => UnlinkOxygenSource(source));
+            UnlinkAllSources();
             Plugin.Logger.LogDebug("OxygenLink Un-Equipped!");
         }
 
@@ -128,6 +128,12 @@ namespace OxygenLink
             Player.main.oxygenMgr.UnregisterSource(source);
         }
 
+        public void UnlinkAllSources()
+        {
+            List<Oxygen> linkedSources = new List<Oxygen>(LinkedSources);
+            linkedSources.ForEach(source => UnlinkOxygenSource(source));
+        }
+
         public void UpdateEquipped(GameObject sender, string slot)
         {
         }
@@ -157,7 +163,7 @@ namespace OxygenLink
         {
             Inventory.main.container.onAddItem -= OnItemAdded;
             Inventory.main.container.onRemoveItem -= OnItemRemoved;
-            LinkedSources.ForEach(source => UnlinkOxygenSource(source));
+            UnlinkAllSources();
             Plugin.Logger.LogDebug("OxygenLink Component Destroyed!");
         }
     }
