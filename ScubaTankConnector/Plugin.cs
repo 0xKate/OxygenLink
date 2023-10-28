@@ -13,7 +13,7 @@ namespace OxygenLink
         public const string
             GUID = $"{AUTHOR}.{NAME}",
             NAME = "OxygenLink",
-            VERSION = "1.2.8",
+            VERSION = "1.2.9",
             AUTHOR = "KateMods",
             NEXUS = "https://www.nexusmods.com/subnautica/mods/1397";
 

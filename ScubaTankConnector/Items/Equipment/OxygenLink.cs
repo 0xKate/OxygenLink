@@ -122,8 +122,7 @@ namespace OxygenLink
         }
         public void UnlinkAllSources()
         {
-            List<Oxygen> linkedSources = new List<Oxygen>(LinkedSources);
-            linkedSources.ForEach(source => UnlinkOxygenSource(source));
+            new List<Oxygen>(LinkedSources).ForEach(UnlinkOxygenSource);
         }
         public void OnItemAdded(InventoryItem item)
         {
@@ -153,7 +152,7 @@ namespace OxygenLink
             {
                 UnregisterEvents();
                 UnlinkAllSources();
-                Destroy(this.gameObject);
+                Destroy(gameObject);
             }
 
         }
@@ -166,6 +165,7 @@ namespace OxygenLink
         {
             if (!EventsRegistered)
             {
+                EventsRegistered = true;
                 Inventory.main.container.onAddItem += OnItemAdded;
                 Inventory.main.container.onRemoveItem += OnItemRemoved;
                 Events.OnPlayerDeath += OnDeath;
@@ -178,8 +178,9 @@ namespace OxygenLink
                 Inventory.main.container.onAddItem -= OnItemAdded;
                 Inventory.main.container.onRemoveItem -= OnItemRemoved;
                 Events.OnPlayerDeath -= OnDeath;
+                EventsRegistered = false;
             }
         }
-        public void UpdateEquipped(GameObject sender, string slot) { }
+        public void UpdateEquipped(GameObject sender, string slot) {}
     }
 }
