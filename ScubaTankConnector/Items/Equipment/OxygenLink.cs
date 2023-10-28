@@ -13,10 +13,9 @@ namespace OxygenLink
     public static class OxygenLinkPrefab
     {
         public static PrefabInfo Info { get; } = PrefabInfo
-            .WithTechType("OxygenLink", "Oxygen Link", "Links all connected tanks in the inventory.")
+            .WithTechType("OxygenLink", "Oxygen Link", "Shares oxygen with all tanks in the inventory while equipped.")
             .WithIcon(ImageUtils.LoadSpriteFromFile(System.IO.Path.Combine(Plugin.AssetFolder, "OxygenLink.png")))
             .WithSizeInInventory(new Vector2int() { x = 1, y = 1 });
-
         public static void Register()
         {
             var oxygenLinkPrefab = new CustomPrefab(Info);
@@ -37,11 +36,10 @@ namespace OxygenLink
             oxygenLinkPrefab.SetPdaGroupCategory(TechGroup.Personal, TechCategory.Equipment);
             oxygenLinkPrefab.Register();
         }
-
         public static RecipeData GetRecipe()
         {
-            var numIngredients = (int)Config.RecipeDifficulty;
-            List<Ingredient> ingredients = Config.RecipeDifficulty switch
+            var numIngredients = (int) Settings.Current.RecipeDifficulty;
+            List<Ingredient> ingredients = Settings.Current.RecipeDifficulty switch
             {
                 Difficulty.Easy => new List<Ingredient>()
                     {
@@ -79,7 +77,6 @@ namespace OxygenLink
         }
     }
 
-
     public class OxygenLink : MonoBehaviour, IEquippable
     {
         public List<Oxygen> LinkedSources = new List<Oxygen>();
@@ -97,7 +94,6 @@ namespace OxygenLink
             UnlinkAllSources();
             Plugin.Logger.LogDebug("OxygenLink Un-Equipped!");
         }
-
         public List<Oxygen> GetOxygenSources()
         {
             List<Oxygen> oxygenSources = new List<Oxygen>();
@@ -115,25 +111,21 @@ namespace OxygenLink
 
             return oxygenSources;
         }
-
         public void LinkOxygenSource(Oxygen source)
         {
             this.LinkedSources.Add(source);
             Player.main.oxygenMgr.RegisterSource(source);
         }
-
         public void UnlinkOxygenSource(Oxygen source)
         {
             this.LinkedSources.Remove(source);
             Player.main.oxygenMgr.UnregisterSource(source);
         }
-
         public void UnlinkAllSources()
         {
             List<Oxygen> linkedSources = new List<Oxygen>(LinkedSources);
             linkedSources.ForEach(source => UnlinkOxygenSource(source));
         }
-
         public void UpdateEquipped(GameObject sender, string slot)
         {
         }
