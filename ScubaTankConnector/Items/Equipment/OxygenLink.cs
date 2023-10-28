@@ -1,11 +1,11 @@
-﻿using Nautilus.Assets.PrefabTemplates;
-using Nautilus.Assets;
+﻿using Nautilus.Assets;
+using Nautilus.Assets.Gadgets;
+using Nautilus.Assets.PrefabTemplates;
 using Nautilus.Crafting;
+using Nautilus.Utility;
 using System;
 using System.Collections.Generic;
-using Nautilus.Utility;
 using UnityEngine;
-using Nautilus.Assets.Gadgets;
 using static CraftData;
 
 namespace OxygenLink
@@ -38,7 +38,7 @@ namespace OxygenLink
         }
         public static RecipeData GetRecipe()
         {
-            var numIngredients = (int) Settings.Current.RecipeDifficulty;
+            var numIngredients = (int)Settings.Current.RecipeDifficulty;
             List<Ingredient> ingredients = Settings.Current.RecipeDifficulty switch
             {
                 Difficulty.Easy => new List<Ingredient>()
@@ -79,18 +79,17 @@ namespace OxygenLink
 
     public class OxygenLink : MonoBehaviour, IEquippable
     {
+        private bool EventsRegistered = false;
         public List<Oxygen> LinkedSources = new List<Oxygen>();
         public void OnEquip(GameObject sender, string slot)
         {
+            RegisterEvents();
             GetOxygenSources().ForEach(source => LinkOxygenSource(source));
-            Inventory.main.container.onAddItem += OnItemAdded;
-            Inventory.main.container.onRemoveItem += OnItemRemoved;
             Plugin.Logger.LogDebug("OxygenLink Equipped!");
         }
         public void OnUnequip(GameObject sender, string slot)
         {
-            Inventory.main.container.onAddItem -= OnItemAdded;
-            Inventory.main.container.onRemoveItem -= OnItemRemoved;
+            UnregisterEvents();
             UnlinkAllSources();
             Plugin.Logger.LogDebug("OxygenLink Un-Equipped!");
         }
@@ -126,10 +125,7 @@ namespace OxygenLink
             List<Oxygen> linkedSources = new List<Oxygen>(LinkedSources);
             linkedSources.ForEach(source => UnlinkOxygenSource(source));
         }
-        public void UpdateEquipped(GameObject sender, string slot)
-        {
-        }
-        private void OnItemAdded(InventoryItem item)
+        public void OnItemAdded(InventoryItem item)
         {
             if (item.item.gameObject.TryGetComponent<Oxygen>(out Oxygen source))
             {
@@ -140,7 +136,7 @@ namespace OxygenLink
                 };
             }
         }
-        private void OnItemRemoved(InventoryItem item)
+        public void OnItemRemoved(InventoryItem item)
         {
             if (item.item.gameObject.TryGetComponent<Oxygen>(out Oxygen source))
             {
@@ -151,12 +147,39 @@ namespace OxygenLink
                 };
             }
         }
-        private void OnDestroy()
+        public void OnDeath(object sender, Extensions.EventArgs<Player> e)
         {
-            Inventory.main.container.onAddItem -= OnItemAdded;
-            Inventory.main.container.onRemoveItem -= OnItemRemoved;
-            UnlinkAllSources();
-            Plugin.Logger.LogDebug("OxygenLink Component Destroyed!");
+            if (Settings.Current.DestroyOnDeath)
+            {
+                UnregisterEvents();
+                UnlinkAllSources();
+                Destroy(this.gameObject);
+            }
+
         }
+        public void OnDestroy()
+        {
+            UnregisterEvents();
+            UnlinkAllSources();
+        }
+        public void RegisterEvents()
+        {
+            if (!EventsRegistered)
+            {
+                Inventory.main.container.onAddItem += OnItemAdded;
+                Inventory.main.container.onRemoveItem += OnItemRemoved;
+                Events.OnPlayerDeath += OnDeath;
+            }
+        }
+        public void UnregisterEvents()
+        {
+            if (EventsRegistered)
+            {
+                Inventory.main.container.onAddItem -= OnItemAdded;
+                Inventory.main.container.onRemoveItem -= OnItemRemoved;
+                Events.OnPlayerDeath -= OnDeath;
+            }
+        }
+        public void UpdateEquipped(GameObject sender, string slot) { }
     }
 }

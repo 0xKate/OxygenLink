@@ -13,10 +13,10 @@ namespace OxygenLink
         public const string
             GUID = $"{AUTHOR}.{NAME}",
             NAME = "OxygenLink",
-            VERSION = "1.1.7",
+            VERSION = "1.2.8",
             AUTHOR = "KateMods",
             NEXUS = "https://www.nexusmods.com/subnautica/mods/1397";
-      
+
         public new static ManualLogSource Logger { get; private set; }
         public static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
         public static string PluginFolder = Assembly.Location.Replace($"{Assembly.GetName().Name}.dll", "");
