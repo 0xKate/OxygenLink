@@ -19,10 +19,11 @@ namespace OxygenLink
 
         public new static ManualLogSource Logger { get; private set; }
         public static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
-        public static string PluginFolder = Assembly.Location.Replace($"{Assembly.GetName().Name}.dll", "");
-        public static string AssetFolder = $"{PluginFolder}\\Assets\\";
+        public static string PluginFolder { get; } = System.IO.Path.GetDirectoryName(Assembly.Location);
+        public static string AssetFolder { get; } = $"{PluginFolder}\\Assets\\";
+
         public static Settings Settings { get; private set; }
-        private void Awake()
+        public void Awake()
         {
             Logger = base.Logger;
             Settings = OptionsPanelHandler.RegisterModOptions<Settings>();

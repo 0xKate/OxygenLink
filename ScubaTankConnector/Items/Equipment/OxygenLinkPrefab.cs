@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Nautilus.Assets.Gadgets;
+using static CraftData;
 
 namespace OxygenLink
 {
@@ -21,16 +22,11 @@ namespace OxygenLink
         {
             var oxygenLinkPrefab = new CustomPrefab(Info);
 
-            var oxygenLinkObj = new CloneTemplate(Info, TechType.SuitBoosterTank);
+            var oxygenLinkObj = new CloneTemplate(Info, TechType.PlasteelTank);
             oxygenLinkObj.ModifyPrefab += obj =>
             {
                 GameObject.DestroyImmediate(obj.GetComponent<Oxygen>());
-                OxygenLink oxygenLink = obj.AddComponent<OxygenLink>();
-                SuitBoosterTank boosterTank = obj.GetComponent<SuitBoosterTank>();
-                boosterTank.enabled = false;
-                boosterTank.oxygenSource = oxygenLink;
-                boosterTank.enabled = true;
-                
+                OxygenLink oxygenLink = obj.AddComponent<OxygenLink>();                
             };
 
             oxygenLinkPrefab.SetGameObject(oxygenLinkObj);
@@ -44,7 +40,7 @@ namespace OxygenLink
             oxygenLinkPrefab.SetPdaGroupCategory(TechGroup.Personal, TechCategory.Equipment);
 
             KnownTechHandler.RemoveDefaultUnlock(Info.TechType);
-            KnownTechHandler.AddRequirementForUnlock(Info.TechType, TechType.Welder);
+            KnownTechHandler.UnlockOnStart(Info.TechType);
 
             oxygenLinkPrefab.Register();
             Plugin.Logger.LogInfo("Prefab OxygenLink is registered!");
@@ -56,28 +52,28 @@ namespace OxygenLink
             {
                 Difficulty.Easy => new List<Ingredient>()
                     {
-                        new Ingredient(TechType.Silicone, 1),
-                        new Ingredient(TechType.Titanium, 3),
-                        new Ingredient(TechType.Lubricant, 2)
+                        new(TechType.Silicone, 1),
+                        new(TechType.Titanium, 3),
+                        new(TechType.Lubricant, 2)
                     },
                 Difficulty.Medium => new List<Ingredient>()
                     {
-                        new Ingredient(TechType.Silicone, 2),
-                        new Ingredient(TechType.Titanium, 4),
-                        new Ingredient(TechType.Lubricant, 2),
-                        new Ingredient(TechType.Glass, 2),
-                        new Ingredient(TechType.ComputerChip, 1),
-                        new Ingredient(TechType.WiringKit, 1)
+                        new(TechType.Silicone, 2),
+                        new(TechType.Titanium, 4),
+                        new(TechType.Lubricant, 2),
+                        new(TechType.Glass, 2),
+                        new(TechType.ComputerChip, 1),
+                        new(TechType.WiringKit, 1)
                     },
                 Difficulty.Hard => new List<Ingredient>()
                     {
-                        new Ingredient(TechType.Silicone, 4),
-                        new Ingredient(TechType.TitaniumIngot, 2),
-                        new Ingredient(TechType.Lubricant, 4),
-                        new Ingredient(TechType.EnameledGlass, 2),
-                        new Ingredient(TechType.AdvancedWiringKit, 2),
-                        new Ingredient(TechType.Polyaniline, 2),
-                        new Ingredient(TechType.Aerogel, 2),
+                        new(TechType.Silicone, 4),
+                        new(TechType.TitaniumIngot, 2),
+                        new(TechType.Lubricant, 4),
+                        new(TechType.EnameledGlass, 2),
+                        new(TechType.AdvancedWiringKit, 2),
+                        new(TechType.Polyaniline, 2),
+                        new(TechType.Aerogel, 2),
                     },
                 _ => throw new InvalidOperationException("Invalid difficulty level") { },
             };
