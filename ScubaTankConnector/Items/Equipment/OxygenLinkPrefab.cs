@@ -21,11 +21,16 @@ namespace OxygenLink
         {
             var oxygenLinkPrefab = new CustomPrefab(Info);
 
-            var oxygenLinkObj = new CloneTemplate(Info, TechType.Tank);
+            var oxygenLinkObj = new CloneTemplate(Info, TechType.SuitBoosterTank);
             oxygenLinkObj.ModifyPrefab += obj =>
             {
                 GameObject.DestroyImmediate(obj.GetComponent<Oxygen>());
-                obj.AddComponent<OxygenLink>();
+                OxygenLink oxygenLink = obj.AddComponent<OxygenLink>();
+                SuitBoosterTank boosterTank = obj.GetComponent<SuitBoosterTank>();
+                boosterTank.enabled = false;
+                boosterTank.oxygenSource = oxygenLink;
+                boosterTank.enabled = true;
+                
             };
 
             oxygenLinkPrefab.SetGameObject(oxygenLinkObj);
