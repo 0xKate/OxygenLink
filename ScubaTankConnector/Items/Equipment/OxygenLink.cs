@@ -1,151 +1,105 @@
-﻿using Nautilus.Assets;
-using Nautilus.Assets.Gadgets;
-using Nautilus.Assets.PrefabTemplates;
-using Nautilus.Crafting;
-using Nautilus.Utility;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using static CraftData;
 
 namespace OxygenLink
 {
-    public static class OxygenLinkPrefab
+    public class OxygenLink : Oxygen, IOxygenSource, IEquippable, ISecondaryTooltip
     {
-        public static PrefabInfo Info { get; } = PrefabInfo
-            .WithTechType("OxygenLink", "Oxygen Link", "Shares oxygen with all tanks in the inventory while equipped.")
-            .WithIcon(ImageUtils.LoadSpriteFromFile(System.IO.Path.Combine(Plugin.AssetFolder, "OxygenLink.png")))
-            .WithSizeInInventory(new Vector2int() { x = 1, y = 1 });
-        public static void Register()
+        private bool eventsRegistered;
+        private List<Oxygen> linkedSources;
+        private bool enableBoosterTank;
+
+        public OxygenLink() : base()
         {
-            var oxygenLinkPrefab = new CustomPrefab(Info);
-
-            var oxygenLinkObj = new CloneTemplate(Info, TechType.PlasteelTank);
-            oxygenLinkObj.ModifyPrefab += obj =>
-            {
-                GameObject.DestroyImmediate(obj.GetComponent<Oxygen>());
-                obj.AddComponent<OxygenLink>();
-            };
-
-            oxygenLinkPrefab.SetGameObject(oxygenLinkObj);
-            oxygenLinkPrefab
-                .SetRecipe(GetRecipe())
-                .WithFabricatorType(CraftTree.Type.Fabricator)
-                .WithStepsToFabricatorTab("Personal", "Equipment");
-            oxygenLinkPrefab.SetEquipment(EquipmentType.Tank);
-            oxygenLinkPrefab.SetPdaGroupCategory(TechGroup.Personal, TechCategory.Equipment);
-            oxygenLinkPrefab.Register();
+            eventsRegistered = false;
+            linkedSources = new List<Oxygen>();
+            enableBoosterTank = false;
         }
-        public static RecipeData GetRecipe()
-        {
-            var numIngredients = (int)Settings.Current.RecipeDifficulty;
-            List<Ingredient> ingredients = Settings.Current.RecipeDifficulty switch
-            {
-                Difficulty.Easy => new List<Ingredient>()
-                    {
-                        new Ingredient(TechType.Silicone, 1),
-                        new Ingredient(TechType.Titanium, 3),
-                        new Ingredient(TechType.Lubricant, 2)
-                    },
-                Difficulty.Medium => new List<Ingredient>()
-                    {
-                        new Ingredient(TechType.Silicone, 2),
-                        new Ingredient(TechType.Titanium, 4),
-                        new Ingredient(TechType.Lubricant, 2),
-                        new Ingredient(TechType.Glass, 2),
-                        new Ingredient(TechType.ComputerChip, 1),
-                        new Ingredient(TechType.WiringKit, 1)
-                    },
-                Difficulty.Hard => new List<Ingredient>()
-                    {
-                        new Ingredient(TechType.Silicone, 4),
-                        new Ingredient(TechType.TitaniumIngot, 2),
-                        new Ingredient(TechType.Lubricant, 4),
-                        new Ingredient(TechType.EnameledGlass, 2),
-                        new Ingredient(TechType.AdvancedWiringKit, 2),
-                        new Ingredient(TechType.Polyaniline, 2),
-                        new Ingredient(TechType.Aerogel, 2),
-                    },
-                _ => throw new InvalidOperationException("Invalid difficulty level") { },
-            };
 
-            return new RecipeData()
-            {
-                craftAmount = 1,
-                Ingredients = ingredients
-            };
-        }
-    }
+        public new float oxygenAvailable => this.GetOxygenAvailable();
+        public new float oxygenCapacity => this.GetOxygenCapacity();
+        public new float oxygenValue => this.GetOxygenAvailable();
+        public new bool isPlayer => false;
 
-    public class OxygenLink : MonoBehaviour, IEquippable
-    {
-        private bool EventsRegistered = false;
-        public List<Oxygen> LinkedSources = new List<Oxygen>();
-        public void OnEquip(GameObject sender, string slot)
+        private List<InventoryItem> GetAllItems()
         {
-            RegisterEvents();
-            GetOxygenSources().ForEach(source => LinkOxygenSource(source));
-            Plugin.Logger.LogDebug("OxygenLink Equipped!");
-        }
-        public void OnUnequip(GameObject sender, string slot)
-        {
-            UnregisterEvents();
-            UnlinkAllSources();
-            Plugin.Logger.LogDebug("OxygenLink Un-Equipped!");
-        }
-        public List<Oxygen> GetOxygenSources()
-        {
-            List<Oxygen> oxygenSources = new List<Oxygen>();
-
-            foreach (TechType techType in Inventory.main.container.GetItemTypes())
+            var allItems = new List<InventoryItem>();
+            foreach (var techType in Inventory.main.container.GetItemTypes())
             {
-                foreach (InventoryItem item in Inventory.main.container.GetItems(techType))
-                {
-                    if (item.item.gameObject.TryGetComponent<Oxygen>(out Oxygen oxygen))
-                    {
-                        oxygenSources.Add(oxygen);
-                    }
-                }
+                allItems.AddRange(Inventory.main.container.GetItems(techType));
             }
+            return allItems;
+        }
 
-            return oxygenSources;
-        }
-        public void LinkOxygenSource(Oxygen source)
+        private void LinkOxygenSource(Oxygen source)
         {
-            this.LinkedSources.Add(source);
-            Player.main.oxygenMgr.RegisterSource(source);
-        }
-        public void UnlinkOxygenSource(Oxygen source)
-        {
-            this.LinkedSources.Remove(source);
-            Player.main.oxygenMgr.UnregisterSource(source);
-        }
-        public void UnlinkAllSources()
-        {
-            new List<Oxygen>(LinkedSources).ForEach(UnlinkOxygenSource);
-        }
-        public void OnItemAdded(InventoryItem item)
-        {
-            if (item.item.gameObject.TryGetComponent<Oxygen>(out Oxygen source))
+            if (!linkedSources.Contains(source))
             {
-                if (!Player.main.oxygenMgr.sources.Contains(source))
-                {
-                    LinkOxygenSource(source);
-                    Plugin.Logger.LogDebug($"Detected new oxygen source! [{source.name}]");
-                };
+                linkedSources.Add(source);
             }
         }
-        public void OnItemRemoved(InventoryItem item)
+
+        private void UnlinkOxygenSource(Oxygen source)
         {
-            if (item.item.gameObject.TryGetComponent<Oxygen>(out Oxygen source))
+            if (linkedSources.Contains(source))
             {
-                if (Player.main.oxygenMgr.sources.Contains(source))
-                {
-                    UnlinkOxygenSource(source);
-                    Plugin.Logger.LogDebug($"Detected removed oxygen source! [{source.name}]");
-                };
+                linkedSources.Remove(source);
             }
         }
+
+        private void ProcessItem(InventoryItem item, bool remove = false)
+        {
+            if (item.item.gameObject.TryGetComponent(out Oxygen oxygen))
+            {
+                if (remove)
+                    UnlinkOxygenSource(oxygen);
+                else
+                    LinkOxygenSource(oxygen);
+            }
+        }
+
+        private void FindAndLinkAllSources()
+        {
+            foreach (var item in GetAllItems())
+            {
+                ProcessItem(item);
+            }
+        }
+
+        private void UnlinkAllSources()
+        {
+            foreach (var item in GetAllItems())
+            {
+                ProcessItem(item, true);
+            }
+        }
+
+        private void RegisterEvents()
+        {
+            if (!eventsRegistered)
+            {
+                eventsRegistered = true;
+                Inventory.main.container.onAddItem += OnItemAdded;
+                Inventory.main.container.onRemoveItem += OnItemRemoved;
+                Events.OnPlayerDeath += OnDeath;
+            }
+        }
+
+        private void UnregisterEvents()
+        {
+            if (eventsRegistered)
+            {
+                Inventory.main.container.onAddItem -= OnItemAdded;
+                Inventory.main.container.onRemoveItem -= OnItemRemoved;
+                Events.OnPlayerDeath -= OnDeath;
+                eventsRegistered = false;
+            }
+        }
+
+        public void OnItemAdded(InventoryItem item) => ProcessItem(item);
+
+        public void OnItemRemoved(InventoryItem item) => ProcessItem(item, true);
+
         public void OnDeath(object sender, Extensions.EventArgs<Player> e)
         {
             if (Settings.Current.DestroyOnDeath)
@@ -154,33 +108,85 @@ namespace OxygenLink
                 UnlinkAllSources();
                 Destroy(gameObject);
             }
-
         }
-        public void OnDestroy()
+
+        public new void OnDestroy()
         {
             UnregisterEvents();
             UnlinkAllSources();
         }
-        public void RegisterEvents()
+
+        public new void OnEquip(GameObject sender, string slot)
         {
-            if (!EventsRegistered)
-            {
-                EventsRegistered = true;
-                Inventory.main.container.onAddItem += OnItemAdded;
-                Inventory.main.container.onRemoveItem += OnItemRemoved;
-                Events.OnPlayerDeath += OnDeath;
-            }
+            FindAndLinkAllSources();
+            RegisterEvents();
+            Player.main.oxygenMgr.RegisterSource(this);
         }
-        public void UnregisterEvents()
+
+        public new void OnUnequip(GameObject sender, string slot)
         {
-            if (EventsRegistered)
-            {
-                Inventory.main.container.onAddItem -= OnItemAdded;
-                Inventory.main.container.onRemoveItem -= OnItemRemoved;
-                Events.OnPlayerDeath -= OnDeath;
-                EventsRegistered = false;
-            }
+            UnregisterEvents();
+            UnlinkAllSources();
+            Player.main.oxygenMgr.UnregisterSource(this);
         }
-        public void UpdateEquipped(GameObject sender, string slot) {}
+
+        public new void UpdateEquipped(GameObject sender, string slot)
+        {
+        }
+
+        public new float GetOxygenAvailable()
+        {
+            float totalOxygen = 0f;
+            foreach (var source in linkedSources)
+            {
+                totalOxygen += source.GetOxygenAvailable();
+            }
+            return totalOxygen;
+        }
+
+        public new float GetOxygenCapacity()
+        {
+            float totalCapacity = 0f;
+            foreach (var source in linkedSources)
+            {
+                totalCapacity += source.GetOxygenCapacity();
+            }
+            return totalCapacity;
+        }
+
+        public new float AddOxygen(float amount)
+        {
+            float remaining = amount;
+            foreach (var source in linkedSources)
+            {
+                if (remaining <= 0f) break;
+                remaining -= source.AddOxygen(remaining);
+            }
+            var res = amount - remaining;
+            return res;
+        }
+
+        public new float RemoveOxygen(float amount)
+        {
+            float remaining = amount;
+            foreach (var source in linkedSources)
+            {
+                if (remaining <= 0f) break;
+                remaining -= source.RemoveOxygen(remaining);
+            }
+            var res = amount - remaining;
+            return res;
+        }
+
+        public new bool IsPlayer() => false;
+
+        public new bool IsBreathable() => linkedSources.Count > 0 && GetOxygenAvailable() > 0;
+
+        public new string GetSecondaryTooltip()
+        {
+            return $"Oxygen: {GetOxygenAvailable()}s\n" +
+                   $"Capacity: {GetOxygenCapacity()}s\n" +
+                   $"Booster: {(enableBoosterTank ? "Enabled" : "Disabled")}\n";
+        }
     }
 }
