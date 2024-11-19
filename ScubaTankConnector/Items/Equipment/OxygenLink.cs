@@ -7,13 +7,11 @@ namespace OxygenLink
     {
         private bool eventsRegistered;
         private List<Oxygen> linkedSources;
-        private bool enableBoosterTank;
 
         public OxygenLink() : base()
         {
             eventsRegistered = false;
             linkedSources = new List<Oxygen>();
-            enableBoosterTank = false;
         }
 
         public new float oxygenAvailable => this.GetOxygenAvailable();
@@ -185,8 +183,7 @@ namespace OxygenLink
         public new string GetSecondaryTooltip()
         {
             return $"Oxygen: {GetOxygenAvailable()}s\n" +
-                   $"Capacity: {GetOxygenCapacity()}s\n" +
-                   $"Booster: {(enableBoosterTank ? "Enabled" : "Disabled")}\n";
+                   $"Capacity: {GetOxygenCapacity()}s\n";
         }
     }
 }
