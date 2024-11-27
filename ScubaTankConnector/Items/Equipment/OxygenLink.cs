@@ -47,7 +47,7 @@ namespace OxygenLink
 
         private void ProcessItem(InventoryItem item, bool remove = false)
         {
-            if (item.item.gameObject.TryGetComponent(out Oxygen oxygen))
+            if (item.item.TryGetComponent(out Oxygen oxygen))
             {
                 if (remove)
                     UnlinkOxygenSource(oxygen);
@@ -178,7 +178,7 @@ namespace OxygenLink
 
         public new bool IsPlayer() => false;
 
-        public new bool IsBreathable() => linkedSources.Count > 0 && GetOxygenAvailable() > 0;
+        public new bool IsBreathable() => linkedSources.Count > 0 && GetOxygenCapacity() > 0;
 
         public new string GetSecondaryTooltip()
         {

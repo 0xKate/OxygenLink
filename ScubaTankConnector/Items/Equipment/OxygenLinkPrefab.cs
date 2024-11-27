@@ -20,34 +20,33 @@ namespace OxygenLink
 
         public static void Register()
         {
-            var oxygenLinkPrefab = new CustomPrefab(Info);
+            var prefab = new CustomPrefab(Info);
 
-            var oxygenLinkObj = new CloneTemplate(Info, TechType.PlasteelTank);
-            oxygenLinkObj.ModifyPrefab += obj =>
+            var template = new CloneTemplate(Info, TechType.PlasteelTank);
+            template.ModifyPrefab += obj =>
             {
                 GameObject.DestroyImmediate(obj.GetComponent<Oxygen>());
                 OxygenLink oxygenLink = obj.AddComponent<OxygenLink>();                
             };
 
-            oxygenLinkPrefab.SetGameObject(oxygenLinkObj);
+            prefab.SetGameObject(template);
 
-            CraftingGadget craftingGadget = oxygenLinkPrefab.SetRecipe(GetRecipe())
+            CraftingGadget craftingGadget = prefab.SetRecipe(GetRecipe())
             .WithFabricatorType(CraftTree.Type.Fabricator)
             .WithStepsToFabricatorTab("Personal", "Equipment");
 
-            EquipmentGadget equipmentGadget = oxygenLinkPrefab.SetEquipment(EquipmentType.Tank);
+            EquipmentGadget equipmentGadget = prefab.SetEquipment(EquipmentType.Tank);
 
-            oxygenLinkPrefab.SetPdaGroupCategory(TechGroup.Personal, TechCategory.Equipment);
+            prefab.SetPdaGroupCategory(TechGroup.Personal, TechCategory.Equipment);
 
             KnownTechHandler.RemoveDefaultUnlock(Info.TechType);
             KnownTechHandler.UnlockOnStart(Info.TechType);
 
-            oxygenLinkPrefab.Register();
+            prefab.Register();
             Plugin.Logger.LogInfo("Prefab OxygenLink is registered!");
         }
         public static RecipeData GetRecipe()
         {
-            var numIngredients = (int)Settings.Current.RecipeDifficulty;
             List<Ingredient> ingredients = Settings.Current.RecipeDifficulty switch
             {
                 Difficulty.Easy => new List<Ingredient>()

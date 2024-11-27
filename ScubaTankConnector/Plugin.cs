@@ -13,14 +13,14 @@ namespace OxygenLink
         public const string
             GUID = $"{AUTHOR}.{NAME}",
             NAME = "OxygenLink",
-            VERSION = "1.4.1",
+            VERSION = "1.4.2",
             AUTHOR = "0xKate",
             NEXUS = "https://www.nexusmods.com/subnautica/mods/1397";
 
         public new static ManualLogSource Logger { get; private set; }
         public static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
         public static string PluginFolder { get; } = System.IO.Path.GetDirectoryName(Assembly.Location);
-        public static string AssetFolder { get; } = $"{PluginFolder}\\Assets\\";
+        public static string AssetFolder { get; } = System.IO.Path.Combine(Plugin.PluginFolder, "Assets");
 
         public static Settings Settings { get; private set; }
         public void Awake()
